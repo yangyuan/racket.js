@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "moduleResolution": "Node",
+        "experimentalDecorators": true,
+        "outFile": "bin/tests.js"
+    }
+}
