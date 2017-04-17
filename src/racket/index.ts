@@ -1,3 +1,5 @@
+/// <reference path="./private/index.ts" />
+
 /**
  * The class to managing racket modules.
  */
@@ -19,6 +21,10 @@ class RacketLibraries {
         RacketLibraries.bind(definitions, ">", new GreaterThanRoutine());
         RacketLibraries.bind(definitions, "<", new LessThanRoutine());
         RacketLibraries.bind(definitions, "=", new EqualsRoutine());
+
+        new BaseModule().definitions().forEach(element => {
+            RacketLibraries.bind(definitions, element[0], element[1]);
+        });
 
         return definitions;
     }

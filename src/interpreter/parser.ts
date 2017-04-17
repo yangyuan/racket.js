@@ -4,8 +4,6 @@
 class Parser {
     public static run (code:string): Program {
         let tokens:Array<Token> = RacketLexer.parse(code);
-        console.log(JSON.stringify(tokens))
-        console.log()
 
         let definitions:Array<Definition> = [];
         let expressions:Array<Expression> = [];
@@ -16,7 +14,6 @@ class Parser {
             index += scope.size;
 
             if (scope.body[0] instanceof Token && scope.body[0].text == "define") {
-                console.log(scope.body);
                 definitions.push(Parser.fetchDefinition(scope));
             } else {
                 expressions.push(Parser.fetch(scope));

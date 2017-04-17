@@ -88,6 +88,16 @@
 
 ## string
 ```
+(string-length "abc")
+(substring "abc" 0 3)
+(substring "abc" 2)
+(string? "abc")
+(string-append "abc" "def" "gh")
+(string=? "abc" (substring (string-append "abc" "def" "gh") 0 3))
+```
+
+## string escape
+```
 (define (sample x)
 	"sample string with quote: \\\"")
 	

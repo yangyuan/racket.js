@@ -9,12 +9,20 @@ interface Value {
      * @returns {Procedure} the value as Procedure
      */
     procedure():Procedure;
+
     /**
      * Get the value as Data.
      * 
      * @returns {Data} the value as Data
      */
-    data():Data;
+    asData():Data;
+
+    /**
+     * Get the value indicates if the value is Data.
+     * 
+     * @returns {boolean} iff the value is Data
+     */
+    isData():boolean;
 }
 
 /**
@@ -59,6 +67,21 @@ interface Data extends Value {
      * @returns {boolean} the data as boolean
      */
     boolean():boolean;
+    
+
+    /**
+     *  Get the value indicates if the value is number.
+     * 
+     * @returns {boolean} iff the data is number
+     */
+    isNumber():boolean;
+
+    /**
+     *  Get the value indicates if the value is string.
+     * 
+     * @returns {boolean} iff the data is string
+     */
+    isString():boolean;
 }
 
 /**

@@ -33,7 +33,7 @@ interface ErrorConstructor {
 
 class AssertionError extends Error {
     constructor(options:any) {
-        super();
+        super(options.message);
         Error.captureStackTrace(this, this.constructor);
     }
 }

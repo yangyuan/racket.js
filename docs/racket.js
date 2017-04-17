@@ -1,4 +1,22 @@
 /**
+ * Error for Racket routines
+ */
+class RacketError extends Error {
+}
+/// <reference path="../base.ts" />
+class BaseModule {
+    definitions() {
+        return [
+            ['string?', new IsStringRoutine()],
+            ['string-length', new StringLengthRoutine()],
+            ['string-append', new StringAppendRoutine()],
+            ['substring', new SubstringRoutine()],
+            ['string=?', new StringEqualsRoutine()],
+        ];
+    }
+}
+/// <reference path="./private/index.ts" />
+/**
  * The class to managing racket modules.
  */
 class RacketLibraries {
@@ -18,6 +36,9 @@ class RacketLibraries {
         RacketLibraries.bind(definitions, ">", new GreaterThanRoutine());
         RacketLibraries.bind(definitions, "<", new LessThanRoutine());
         RacketLibraries.bind(definitions, "=", new EqualsRoutine());
+        new BaseModule().definitions().forEach(element => {
+            RacketLibraries.bind(definitions, element[0], element[1]);
+        });
         return definitions;
     }
     /**
@@ -176,7 +197,6 @@ class Interpreter {
         program.expressions.forEach(element => {
             let value = element.evaluate(environment);
             values.push(value.value);
-            console.log(value.value);
         });
         return values;
     }
@@ -443,8 +463,12 @@ class BaseData {
         throw new Error("Can not cast from Data to Procedure.");
     }
     /** @inheritdoc */
-    data() {
+    asData() {
         return this;
+    }
+    /** @inheritdoc */
+    isData() {
+        return true;
     }
 }
 /**
@@ -456,8 +480,12 @@ class BaseProcedure {
         return this;
     }
     /** @inheritdoc */
-    data() {
+    asData() {
         throw new Error("Can not cast from Procedure to Data.");
+    }
+    /** @inheritdoc */
+    isData() {
+        return false;
     }
 }
 /**
@@ -488,6 +516,14 @@ class DefaultData extends BaseData {
             return this.value;
         }
         throw new Error("can not cast value to boolean");
+    }
+    /** @inheritdoc */
+    isString() {
+        return typeof this.value == "string";
+    }
+    /** @inheritdoc */
+    isNumber() {
+        return typeof this.value == "number";
     }
 }
 /**
@@ -643,7 +679,7 @@ class DefaultIfExpression extends BaseExpression {
     /** @inheritdoc */
     evaluate(environment) {
         let testValue = this.testExpression.evaluate(environment);
-        let testResult = testValue.data().boolean();
+        let testResult = testValue.asData().boolean();
         if (testResult) {
             return this.thenExpression.evaluate(environment);
         }
@@ -657,8 +693,6 @@ class DefaultIfExpression extends BaseExpression {
 class Parser {
     static run(code) {
         let tokens = RacketLexer.parse(code);
-        console.log(JSON.stringify(tokens));
-        console.log();
         let definitions = [];
         let expressions = [];
         let index = 0;
@@ -666,7 +700,6 @@ class Parser {
             let scope = ParseTree.parse(tokens, index, tokens.length);
             index += scope.size;
             if (scope.body[0] instanceof Token && scope.body[0].text == "define") {
-                console.log(scope.body);
                 definitions.push(Parser.fetchDefinition(scope));
             }
             else {
@@ -818,5 +851,111 @@ class ParseTree {
             }
         }
         return obj;
+    }
+}
+/**
+ * Routine for string? operation.
+ * @todo deal with errors.
+ */
+class IsStringRoutine {
+    /** @inheritdoc */
+    evaluate(parameters) {
+        if (parameters.length != 1) {
+            throw new RacketError("the expected number of arguments does not match the given number");
+        }
+        if (parameters[0].isData() && parameters[0].asData().isString()) {
+            return Syntax.createBooleanData(true);
+        }
+        return Syntax.createBooleanData(false);
+    }
+}
+/**
+ * Routine for string-length operation.
+ * @todo deal with errors.
+ */
+class StringLengthRoutine {
+    /** @inheritdoc */
+    evaluate(parameters) {
+        if (parameters.length != 1) {
+            throw new RacketError("the expected number of arguments does not match the given number");
+        }
+        if (parameters[0].isData() && parameters[0].asData().isString()) {
+            return Syntax.createNumberData(parameters[0].asData().value.length);
+        }
+        throw new RacketError("Expect a string value");
+    }
+}
+/**
+ * Routine for string-append operation.
+ * @todo deal with errors.
+ */
+class StringAppendRoutine {
+    /** @inheritdoc */
+    evaluate(parameters) {
+        let value = "";
+        parameters.forEach(element => {
+            if (element.isData() && element.asData().isString()) {
+                value += element.asData().value;
+            }
+            else {
+                throw new RacketError("Expect a string value");
+            }
+        });
+        return Syntax.createStringData(value);
+    }
+}
+/**
+ * Routine for substring operation.
+ * @todo deal with errors.
+ */
+class SubstringRoutine {
+    /** @inheritdoc */
+    evaluate(parameters) {
+        if (parameters.length < 2 || parameters.length > 3) {
+            throw new RacketError("the expected number of arguments does not match the given number");
+        }
+        if (!parameters[0].isData() || !parameters[0].asData().isString()) {
+            throw new RacketError("Expect a string value");
+        }
+        let value = parameters[0].asData().value;
+        if (!parameters[1].isData() || !parameters[1].asData().isNumber()) {
+            throw new RacketError("Expect a number value");
+        }
+        let start = parameters[1].asData().value;
+        let end = value.length;
+        if (parameters.length == 3) {
+            if (!parameters[2].isData() || !parameters[2].asData().isNumber()) {
+                throw new RacketError("Expect a number value");
+            }
+            end = parameters[2].asData().value;
+        }
+        return Syntax.createStringData(value.substring(start, end));
+    }
+}
+/**
+ * Routine for string=? operation.
+ * @todo deal with errors.
+ */
+class StringEqualsRoutine {
+    /** @inheritdoc */
+    evaluate(parameters) {
+        if (parameters.length < 2) {
+            throw new RacketError("the expected number of arguments does not match the given number");
+        }
+        if (!parameters[0].isData() && !parameters[0].asData().isString()) {
+            throw new RacketError("Expect a string value");
+        }
+        let value = parameters[0].asData().value;
+        for (let parameter of parameters) {
+            if (parameter.isData() && parameter.asData().isString()) {
+                if (value !== parameter.asData().value) {
+                    return Syntax.createBooleanData(false);
+                }
+            }
+            else {
+                throw new RacketError("Expect a string value");
+            }
+        }
+        return Syntax.createBooleanData(true);
     }
 }

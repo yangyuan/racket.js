@@ -173,9 +173,15 @@ abstract class BaseData implements Data {
     }
 
     /** @inheritdoc */
-    data():Data {
+    asData():Data {
         return this;
     }
+
+    /** @inheritdoc */
+    isData():boolean {
+        return true;
+    }
+    
 
     /** @inheritdoc */
     abstract readonly value:any;
@@ -188,6 +194,12 @@ abstract class BaseData implements Data {
 
     /** @inheritdoc */
     abstract boolean():boolean;
+
+    /** @inheritdoc */
+    abstract isString():boolean;
+
+    /** @inheritdoc */
+    abstract isNumber():boolean;
 }
 
 /**
@@ -201,8 +213,13 @@ abstract class BaseProcedure implements Procedure {
     }
 
     /** @inheritdoc */
-    data():Data {
+    asData():Data {
         throw new Error("Can not cast from Procedure to Data.");
+    }
+
+    /** @inheritdoc */
+    isData():boolean {
+        return false;
     }
 
     /** @inheritdoc */
@@ -244,6 +261,16 @@ class DefaultData extends BaseData implements Data {
             return this.value;
         }
         throw new Error("can not cast value to boolean");
+    }
+
+    /** @inheritdoc */
+    isString():boolean {
+        return typeof this.value == "string";
+    }
+
+    /** @inheritdoc */
+    isNumber():boolean {
+        return typeof this.value == "number";
     }
 }
 
@@ -455,7 +482,7 @@ class DefaultIfExpression extends BaseExpression implements IfExpression {
     /** @inheritdoc */
     public evaluate(environment:Map<string, Value>): Value {
         let testValue:Value = this.testExpression.evaluate(environment);
-        let testResult = testValue.data().boolean();
+        let testResult = testValue.asData().boolean();
 
         if (testResult) {
             return this.thenExpression.evaluate(environment);

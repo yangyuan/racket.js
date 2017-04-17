@@ -3,7 +3,7 @@ class Interpreter {
         return expression.evaluate(environment);
     }
 
-    public static run(program:Program):Array<any> {
+    public static run(program:Program):Array<Data> {
 
         let environment:Map<string,Value> = new Map<string,Value>();
 
@@ -15,11 +15,10 @@ class Interpreter {
             environment.set(element.identifier, new LambdaProcedure(element.expression as LambdaExpression, environment));
         });
         
-        let values:Array<any> = []
+        let values:Array<Data> = []
         program.expressions.forEach(element => {
             let value = element.evaluate(environment) as Data;
             values.push(value.value);
-            console.log(value.value);
         });
 
         return values;
